@@ -18,15 +18,19 @@ struct hashEntry{
 	int hashValue = 0;
 };
 
+/* Prints the given hash Table
+ * Skips empty cells
+ */
 void printHashTable(hashEntry table[]){
 	for (int i = 0; i < tableSize; i ++){
 		//cout << "Hash Address: " << i << " Hashed Word: " << table[i].word << " Hash Value: " << table[i].hashValue << endl;
-		cout << i << ", " << table[i].word << ", " << table[i].hashValue << endl;
+		if (table[i].flag == 1){
+			cout << i << ", " << table[i].word << ", " << table[i].hashValue << endl;
+		}
 	}
 }
 
 /* Helper function to createHash()
- *
  * @param c Letter to be converted
  * @return the ascii value of the given letter is[a,z],[A,Z],'apostrophe, -1 otherwise for other characters such as punctuation
  */
@@ -37,7 +41,7 @@ int ord(char c){
 	else if (c == '\''){
 		return 39;
 	}
-	return -1; //TODO fix return value for non letter values, this still affects the result, need to skip entirely
+	return -1;
 }
 
 /* Generates the hash value,
@@ -46,8 +50,14 @@ int ord(char c){
  */
 int createHash(string str){
 	int hash = 0;
-	for (int i = 0; i < str.size(); i++){
-		hash = (hash*C +ord(str[i]))%m;
+	for (int i = 0; i < (int)str.size(); i++){
+		int val = ord(str[i]);
+		if (val !=-1){
+			hash = (hash*C +ord(str[i]))%m;
+		}
+		if (str.size() == 1 && !isalpha(str[0]) && str[0] != '\'') { //char is a value such as '-'
+			return -1;
+		}
 	}
 	return hash;
 }
@@ -56,13 +66,13 @@ int createHash(string str){
  * Discards duplicates and loops (closed hashing/open addressing)
  * @param word The word/string to be inserted
  * @param table The hash table where the word will be inserted into
- * @return True if successful false otherwise TODO fix return values
+ * @return True on completion, false otherwise
  */
 bool addToTable(string word, hashEntry table[]){
 	int tempHash = createHash(word);
 	cout << word << ": " << tempHash << endl;
 
-	if (tempHash < 0){ //TODO string is not a word to be added ie '-'
+	if (tempHash == -1){ //string is not a word ie '-', therefore doesn't need to inserted
 		return true;
 	}
 
@@ -70,6 +80,7 @@ bool addToTable(string word, hashEntry table[]){
 		table[tempHash].flag = 1;
 		table[tempHash].word = word;
 		table[tempHash].hashValue = tempHash;
+		return true;
 	}
 	else {
 		//word is not a duplicate, check following cells until match(search success, duplicate) or empty cell(search fail and add new entry here)
@@ -81,16 +92,18 @@ bool addToTable(string word, hashEntry table[]){
 				}
 				if (word.compare(table[pos].word)){ // compare strings, match = duplicate so stop
 					pos = -1;
+					return true;
 				}
 				else if (table[pos].flag == 0){ //cell is empty, no duplicate found and add entry here
 					table[pos].flag = 1;
 					table[pos].word = word;
 					table[pos].hashValue = tempHash;
+					return true;
 				}
 			}
 		}
 	}
-	return true;
+	return false; //word not a duplicate and not inserted for some reason
 }
 
 int main() {
@@ -105,7 +118,7 @@ int main() {
 	}
 	fin.close();
 
-	//printHashTable(hashTable);
+	printHashTable(hashTable);
 
 	return 0;
 }
