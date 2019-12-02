@@ -22,13 +22,58 @@ struct hashEntry{
  * Skips empty cells
  */
 void printHashTable(hashEntry table[]){
+	int useCt = 0;
 	for (int i = 0; i < tableSize; i ++){
 		//cout << "Hash Address: " << i << " Hashed Word: " << table[i].word << " Hash Value: " << table[i].hashValue << endl;
 		if (table[i].flag == 1){
+			useCt++;
 			cout << i << ", " << table[i].word << ", " << table[i].hashValue << endl;
 		}
 	}
+	cout << "number of non-empty addresses: " << useCt << endl;
+	long loadFactor = (long)useCt / (long)tableSize;
+	cout << "load factor: " << loadFactor << endl;
 }
+
+void groupings(hashEntry table[]){
+	int longestEmptyCt = 0;
+	int emptyStart = 0;
+	int longestFullCt = 0;
+	int fullStart = 0;
+
+	int curEmptyCt = 0;
+	int curFullCt = 0;
+
+	int prevFlag = table[0].flag;
+	for (int i = 1; i < tableSize; i++){
+		if (table[i].flag == 0 && prevFlag == 0){
+			curEmptyCt++;
+		}
+		else if (table[i].flag == 1 && prevFlag == 1){
+			curFullCt++;
+		}
+		else if (table[i].flag == 1 && prevFlag == 0){
+			if (curEmptyCt > longestEmptyCt){
+				longestEmptyCt = curEmptyCt;
+				curEmptyCt = 0;
+				emptyStart = i-longestEmptyCt;
+				prevFlag = 1;
+			}
+		}
+		else if (table[i].flag == 0 && prevFlag == 1){
+			if (curFullCt >longestFullCt){
+				longestFullCt = curFullCt;
+				curFullCt = 0;
+				fullStart = i-longestFullCt;
+				prevFlag = 0;
+			}
+		}
+	}
+	cout << "Longest empty area: " << longestEmptyCt << " starting at: " << emptyStart << endl;
+	cout << "Longest cluster: " << longestFullCt << " starting at: " << fullStart << endl;
+
+}
+
 
 /* Helper function to createHash()
  * @param c Letter to be converted
@@ -119,6 +164,8 @@ int main() {
 	fin.close();
 
 	printHashTable(hashTable);
+	groupings(hashTable);
+	//TODO functions for p3 d&e!!!
 
 	return 0;
 }
