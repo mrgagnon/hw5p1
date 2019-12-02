@@ -8,6 +8,7 @@
 
 using namespace std;
 
+
 #define C 123
 #define m 1000
 #define tableSize 1000
