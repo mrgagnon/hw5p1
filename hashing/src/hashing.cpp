@@ -28,7 +28,7 @@ void printHashTable(hashEntry table[]){
 		//cout << "Hash Address: " << i << " Hashed Word: " << table[i].word << " Hash Value: " << table[i].hashValue << endl;
 		if (table[i].flag == 1){
 			useCt++;
-			cout << i << ", " << table[i].word << ", " << table[i].hashValue << endl;
+			cout << i << "     " << table[i].word << "     " << table[i].hashValue << endl;
 		}
 	}
 	cout << "number of non-empty addresses: " << useCt << endl;
@@ -107,12 +107,47 @@ int createHash(string str){
 	return hash;
 }
 
+bool strCompare(string w1, string w2){
+
+}
+
 /* Takes the given word and inserts it into the hashTable as appropriate
  * Discards duplicates and loops (closed hashing/open addressing)
  * @param word The word/string to be inserted
  * @param table The hash table where the word will be inserted into
  * @return True on completion, false otherwise
  */
+bool addToTable(string word, hashEntry table[]){
+	int tempHash = createHash(word);
+	cout << word << ": " << tempHash << endl;
+
+	if (tempHash == -1){ //string is not a word ie '-', therefore doesn't need to inserted
+		return true;
+	}
+
+	int pos = tempHash;
+	while (pos != -1){
+		if (pos >= tableSize){
+			pos = 0;
+		}
+		if (table[tempHash].flag == 0){ // no duplicates and empty so insert here
+			table[tempHash].flag = 1;
+			table[tempHash].word = word;
+			table[tempHash].hashValue = tempHash;
+			return true;
+		}
+		else if (word.compare(table[pos].word)){ //TODO issue in general! issue with when punctuation is attached //compare strings, match = duplicate so stop
+			pos = -1;
+			return true;
+		}
+		else {
+			pos++;
+		}
+	}// end while
+
+	return false; //word not a duplicate and not inserted for some reason
+}
+/*
 bool addToTable(string word, hashEntry table[]){
 	int tempHash = createHash(word);
 	cout << word << ": " << tempHash << endl;
@@ -153,7 +188,7 @@ bool addToTable(string word, hashEntry table[]){
 		}// end while
 	}
 	return false; //word not a duplicate and not inserted for some reason
-}
+}*/
 //reclining 990 bends 991
 //930 raven, from 928, its at 928 already
 
