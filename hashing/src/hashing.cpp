@@ -72,7 +72,6 @@ void groupings(hashEntry table[]){
 	}
 	cout << "Longest empty area: " << longestEmptyCt << " starting at: " << emptyStart << endl;
 	cout << "Longest cluster: " << longestFullCt << " starting at: " << fullStart << endl;
-
 }
 
 
@@ -122,35 +121,41 @@ bool addToTable(string word, hashEntry table[]){
 		return true;
 	}
 
-	if (table[tempHash].flag == 0){ // pos is empty, no duplicates and can insert here
+	if (table[tempHash].flag == 0){ // first cell is empty, no duplicates and can insert here
 		table[tempHash].flag = 1;
 		table[tempHash].word = word;
 		table[tempHash].hashValue = tempHash;
 		return true;
 	}
-	else {
-		//word is not a duplicate, check following cells until match(search success, duplicate) or empty cell(search fail and add new entry here)
-		if (!(word.compare(table[tempHash].word))){
-			int pos = tempHash+1;
-			while (pos != -1){
-				if (pos >= tableSize){
-					pos = 0;
-				}
-				if (word.compare(table[pos].word)){ // compare strings, match = duplicate so stop
-					pos = -1;
-					return true;
-				}
-				else if (table[pos].flag == 0){ //cell is empty, no duplicate found and add entry here
-					table[pos].flag = 1;
-					table[pos].word = word;
-					table[pos].hashValue = tempHash;
-					return true;
-				}
+	else { //check cells for match (ie duplicate) or first empty cell (add new entry)
+		int pos = tempHash;
+		while (pos != -1){
+			if (pos >= tableSize){
+				pos = 0;
 			}
-		}
+			if (word.compare(table[pos].word)){ //TODO issue with when puncation is attached //compare strings, match = duplicate so stop
+				cout << table[pos].word << "*** duplicate" << endl;
+				pos = -1;
+				return true;
+			}
+			else if (table[pos].flag == 0){ //cell is empty, no duplicate found and add entry here
+				cout << "empty ----" << endl;
+				table[pos].flag = 1;
+				table[pos].word = word;
+				table[pos].hashValue = tempHash;
+				return true;
+			}
+			//else if (!(word.compare(table[pos].word)) && table[pos].flag == 1 ){ // cell full but not a match, so continue to next cell
+			else {
+				cout << table[pos].word << "****** skip to next" << endl;
+				pos++;
+			}
+		}// end while
 	}
 	return false; //word not a duplicate and not inserted for some reason
 }
+//reclining 990 bends 991
+//930 raven, from 928, its at 928 already
 
 int main() {
 	hashEntry hashTable[tableSize];
