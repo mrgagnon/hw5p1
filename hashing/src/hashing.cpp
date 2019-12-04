@@ -1,5 +1,5 @@
 /* Maylee Gagnon
- * CS 2223 HW5P1-3?
+ * CS 2223 HW5P1-P3
  * 11.26.2019
  */
 #include <iostream>
@@ -23,56 +23,78 @@ struct hashEntry{
 void printHashTable(hashEntry table[]){
 	int useCt = 0;
 	for (int i = 0; i < tableSize; i ++){
-		useCt++;
+		if (table[i].flag == 0){
+			useCt++;
+		}
 		cout << i << "  :  " << table[i].word << "  :  " << table[i].hashValue << endl;
 	}
-	cout << "number of non-empty addresses: " << useCt << endl;
-	long loadFactor = (long)useCt / (long)tableSize;
-	cout << "load factor: " << loadFactor << endl;
+	cout << "Number of non-empty addresses: " << useCt << endl;
+	double loadFactor = (double)useCt / (double)tableSize;
+	cout << "     Load factor: " << loadFactor << endl;
 }
 
-/*
- *
+
+/* Looks through hashTable and finds and counts the longest fun of full and empty cells. Prints out results
+ * @param table The hashTable to be examined
  */
 void groupings(hashEntry table[]){
-	int longestEmptyCt = 0;
-	int emptyStart = 0;
-	int longestFullCt = 0;
-	int fullStart = 0;
+	int maxCtUsed = 0;
+	int maxCtEmpty = 0;
+	int maxStartUsed = 0;
+	int maxStartEmpty = 0;
+	int curCtUsed = 0;
+	int curCtEmpty = 0;
+	int curStartUsed = 0;
+	int curStartEmpty = 0;
 
-	int curEmptyCt = 0;
-	int curFullCt = 0;
+	int prevFlag;
 
-	int prevFlag = table[0].flag;
+	if (table[0].flag == 0){
+		curCtEmpty = 1;
+		prevFlag = 0;
+	}
+	else {
+		curCtUsed = 1;
+		prevFlag = 1;
+	}
+
 	for (int i = 1; i < tableSize; i++){
 		if (table[i].flag == 0 && prevFlag == 0){
-			curEmptyCt++;
+			curCtEmpty = curCtEmpty+1;
 		}
 		else if (table[i].flag == 1 && prevFlag == 1){
-			curFullCt++;
-		}
-		else if (table[i].flag == 1 && prevFlag == 0){
-			if (curEmptyCt > longestEmptyCt){
-				longestEmptyCt = curEmptyCt;
-				curEmptyCt = 0;
-				emptyStart = i-longestEmptyCt;
-				prevFlag = 1;
-			}
+			curCtUsed = curCtUsed+1;
 		}
 		else if (table[i].flag == 0 && prevFlag == 1){
-			if (curFullCt >longestFullCt){
-				longestFullCt = curFullCt;
-				curFullCt = 0;
-				fullStart = i-longestFullCt;
-				prevFlag = 0;
+			curStartEmpty = i;
+			curCtEmpty = 1;
+			prevFlag = 0;
+
+			if (curCtUsed > maxCtUsed){
+				maxCtUsed = curCtUsed;
+				maxStartUsed = curStartUsed;
+			}
+		}
+		else if (table[i].flag == 1 && prevFlag == 0){
+			curStartUsed = i;
+			curCtUsed = 1;
+			prevFlag = 1;
+
+			if (curCtEmpty > maxCtEmpty){
+				maxCtEmpty = curCtEmpty;
+				maxStartEmpty = curStartEmpty;
 			}
 		}
 	}
-	cout << "Longest empty area: " << longestEmptyCt << " starting at: " << emptyStart << endl;
-	cout << "Longest cluster: " << longestFullCt << " starting at: " << fullStart << endl;
+
+	cout << "Longest empty area: " << maxCtEmpty << endl;
+	cout << "     starting at: " << maxStartEmpty << endl;
+	cout << "Longest cluster: " << maxCtUsed << endl;
+	cout << "     starting at: " << maxStartUsed << endl;
 }
 
-/*
+/* Looks through a hashTable and finds which hash address has the most number of words associated
+ * @param table The hashTable to be searched
  *
  */
 void mostHashAddress(hashEntry table[]){
@@ -97,31 +119,32 @@ void mostHashAddress(hashEntry table[]){
 			pos = i;
 		}
 	}
-	cout << "Hash Address with most words: "<< pos << " with " << max << " number of words" << endl;
+	cout << "Hash Address with most words: " << pos << endl;
+	cout << "     Number of words: " << max << endl;
 }
 
-/*
- *
+/* Finds the words furthest away from where it suppose to be in the table ie hash address and hash value are furthest apart
+ * For words that loop they are counted moving fowared that looping back to 0 ie suppose to be at 998 but placed at 3 would be 5 not 995
+ * @param table The hashTable to be checked
  */
 void furthest(hashEntry table[]){
 	int max = 0;
 	string word;
 	int temp;
 	for (int i = 0; i < tableSize; i++){
-		if (i >= table[i].hashValue){//ie suppose to be at 20, but placed at 25,
+		if (i >= table[i].hashValue && table[i].hashValue != -1){
 			temp = i - table[i].hashValue;
 		}
-		else { //loops ie suppose to be at 998 but placed at 3
+		else if (i < table[i].hashValue && table[i].hashValue != -1){ //loops
 			temp = (tableSize-table[i].hashValue)+i;
 		}
 		if (temp > max){
 			max = temp;
 			word = table[i].word;
-			//cout << word << endl;
 		}
 	}
-	cout << word;
-	cout << "Word furthest away" << word << " is " << max << " far away" << endl;
+	cout << "Word furthest away is: " << word << endl;
+	cout << "     Spaces away: " << max << endl;
 }
 
 /* Helper function to createHash()
@@ -144,7 +167,7 @@ int ord(char c){
  */
 int createHash(string str){
 	int hash = 0;
-	if (str.size() == 0){//empty, punct was stripped
+	if (str.size() == 0){//empty only punct and was removed already
 		return -1;
 	}
 	for (int i = 0; i < (int)str.size(); i++){
@@ -155,7 +178,6 @@ int createHash(string str){
 	}
 	return hash;
 }
-
 
 /* Takes the given word and inserts it into the hashTable as appropriate
  * Discards duplicates and loops (closed hashing/open addressing)
@@ -175,7 +197,7 @@ bool addToTable(string w, hashEntry table[]){
 
 	int tempHash = createHash(word);
 
-	if (tempHash == -1){ //string is not a word ie '-', therefore doesn't need to inserted
+	if (tempHash == -1){ //string was not a word ie '-', therefore doesn't need to inserted
 		return true;
 	}
 
@@ -192,12 +214,10 @@ bool addToTable(string w, hashEntry table[]){
 			return true;
 		}
 		else if ((word.compare(table[pos].word) == 0)){ // duplicate
-			cout << word << endl;
-			cout << table[pos].word << endl;
 			pos = -1;
 			return true;
 		}
-		else {
+		else { // still looking for open spot or duplicate so next cell
 			pos++;
 		}
 	}// end while
