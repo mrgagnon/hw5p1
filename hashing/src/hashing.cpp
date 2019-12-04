@@ -8,7 +8,6 @@
 
 using namespace std;
 
-
 #define C 123
 #define m 1000
 #define tableSize 1000
@@ -16,26 +15,25 @@ using namespace std;
 struct hashEntry{
 	string word;
 	int flag = 0;
-	int hashValue = 0;
+	int hashValue = -1;
 };
 
 /* Prints the given hash Table
- * Skips empty cells
  */
 void printHashTable(hashEntry table[]){
 	int useCt = 0;
 	for (int i = 0; i < tableSize; i ++){
-		//cout << "Hash Address: " << i << " Hashed Word: " << table[i].word << " Hash Value: " << table[i].hashValue << endl;
-		if (table[i].flag == 1){
-			useCt++;
-			cout << i << "     " << table[i].word << "     " << table[i].hashValue << endl;
-		}
+		useCt++;
+		cout << i << "  :  " << table[i].word << "  :  " << table[i].hashValue << endl;
 	}
 	cout << "number of non-empty addresses: " << useCt << endl;
 	long loadFactor = (long)useCt / (long)tableSize;
 	cout << "load factor: " << loadFactor << endl;
 }
 
+/*
+ *
+ */
 void groupings(hashEntry table[]){
 	int longestEmptyCt = 0;
 	int emptyStart = 0;
@@ -74,6 +72,57 @@ void groupings(hashEntry table[]){
 	cout << "Longest cluster: " << longestFullCt << " starting at: " << fullStart << endl;
 }
 
+/*
+ *
+ */
+void mostHashAddress(hashEntry table[]){
+	int ct[tableSize];
+
+	for (int i = 0; i < tableSize; i++){
+		ct[i] = 0;
+	}
+
+	for (int i = 0; i < tableSize; i++){
+		int tempVal = table[i].hashValue; //get where this string is suppose to be
+		if (tempVal != -1){
+			ct[tempVal] = ct[tempVal]+1; // increment count at the location by one
+		}
+	}
+
+	int max = 0;
+	int pos = 0;
+	for (int i = 0; i < tableSize; i++){
+		if (ct[i] > max){
+			max = ct[i];
+			pos = i;
+		}
+	}
+	cout << "Hash Address with most words: "<< pos << " with " << max << " number of words" << endl;
+}
+
+/*
+ *
+ */
+void furthest(hashEntry table[]){
+	int max = 0;
+	string word;
+	int temp;
+	for (int i = 0; i < tableSize; i++){
+		if (i >= table[i].hashValue){//ie suppose to be at 20, but placed at 25,
+			temp = i - table[i].hashValue;
+		}
+		else { //loops ie suppose to be at 998 but placed at 3
+			temp = (tableSize-table[i].hashValue)+i;
+		}
+		if (temp > max){
+			max = temp;
+			word = table[i].word;
+			//cout << word << endl;
+		}
+	}
+	cout << word;
+	cout << "Word furthest away" << word << " is " << max << " far away" << endl;
+}
 
 /* Helper function to createHash()
  * @param c Letter to be converted
@@ -95,21 +144,18 @@ int ord(char c){
  */
 int createHash(string str){
 	int hash = 0;
+	if (str.size() == 0){//empty, punct was stripped
+		return -1;
+	}
 	for (int i = 0; i < (int)str.size(); i++){
 		int val = ord(str[i]);
 		if (val !=-1){
 			hash = (hash*C +ord(str[i]))%m;
 		}
-		if (str.size() == 1 && !isalpha(str[0]) && str[0] != '\'') { //char is a value such as '-'
-			return -1;
-		}
 	}
 	return hash;
 }
 
-bool strCompare(string w1, string w2){
-
-}
 
 /* Takes the given word and inserts it into the hashTable as appropriate
  * Discards duplicates and loops (closed hashing/open addressing)
@@ -117,9 +163,17 @@ bool strCompare(string w1, string w2){
  * @param table The hash table where the word will be inserted into
  * @return True on completion, false otherwise
  */
-bool addToTable(string word, hashEntry table[]){
+bool addToTable(string w, hashEntry table[]){
+	string word = w;
+	int len = word.size();
+	for (int i = 0; i < len; i++){ // removing excess punctuation
+		if (ispunct(word[i]) && !(word[i] == '\'')){
+			word.erase(i--,1);
+			len = word.size();
+		}
+	}
+
 	int tempHash = createHash(word);
-	cout << word << ": " << tempHash << endl;
 
 	if (tempHash == -1){ //string is not a word ie '-', therefore doesn't need to inserted
 		return true;
@@ -130,13 +184,16 @@ bool addToTable(string word, hashEntry table[]){
 		if (pos >= tableSize){
 			pos = 0;
 		}
-		if (table[tempHash].flag == 0){ // no duplicates and empty so insert here
-			table[tempHash].flag = 1;
-			table[tempHash].word = word;
-			table[tempHash].hashValue = tempHash;
+		if (table[pos].flag == 0){ // no duplicates and empty so insert here
+			table[pos].flag = 1;
+			table[pos].word = word;
+			table[pos].hashValue = tempHash;
+			pos = -1;
 			return true;
 		}
-		else if (word.compare(table[pos].word)){ //TODO issue in general! issue with when punctuation is attached //compare strings, match = duplicate so stop
+		else if ((word.compare(table[pos].word) == 0)){ // duplicate
+			cout << word << endl;
+			cout << table[pos].word << endl;
 			pos = -1;
 			return true;
 		}
@@ -144,53 +201,8 @@ bool addToTable(string word, hashEntry table[]){
 			pos++;
 		}
 	}// end while
-
 	return false; //word not a duplicate and not inserted for some reason
 }
-/*
-bool addToTable(string word, hashEntry table[]){
-	int tempHash = createHash(word);
-	cout << word << ": " << tempHash << endl;
-
-	if (tempHash == -1){ //string is not a word ie '-', therefore doesn't need to inserted
-		return true;
-	}
-
-	if (table[tempHash].flag == 0){ // first cell is empty, no duplicates and can insert here
-		table[tempHash].flag = 1;
-		table[tempHash].word = word;
-		table[tempHash].hashValue = tempHash;
-		return true;
-	}
-	else { //check cells for match (ie duplicate) or first empty cell (add new entry)
-		int pos = tempHash;
-		while (pos != -1){
-			if (pos >= tableSize){
-				pos = 0;
-			}
-			if (word.compare(table[pos].word)){ //TODO issue with when puncation is attached //compare strings, match = duplicate so stop
-				cout << table[pos].word << "*** duplicate" << endl;
-				pos = -1;
-				return true;
-			}
-			else if (table[pos].flag == 0){ //cell is empty, no duplicate found and add entry here
-				cout << "empty ----" << endl;
-				table[pos].flag = 1;
-				table[pos].word = word;
-				table[pos].hashValue = tempHash;
-				return true;
-			}
-			//else if (!(word.compare(table[pos].word)) && table[pos].flag == 1 ){ // cell full but not a match, so continue to next cell
-			else {
-				cout << table[pos].word << "****** skip to next" << endl;
-				pos++;
-			}
-		}// end while
-	}
-	return false; //word not a duplicate and not inserted for some reason
-}*/
-//reclining 990 bends 991
-//930 raven, from 928, its at 928 already
 
 int main() {
 	hashEntry hashTable[tableSize];
@@ -206,7 +218,8 @@ int main() {
 
 	printHashTable(hashTable);
 	groupings(hashTable);
-	//TODO functions for p3 d&e!!!
+	mostHashAddress(hashTable);
+	furthest(hashTable);
 
 	return 0;
 }
