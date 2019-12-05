@@ -1,5 +1,5 @@
 /* Maylee Gagnon
- * CS 2223 HW5P1-P3
+ * CS 2223 HW5P1,P2,P3
  * 11.26.2019
  */
 #include <iostream>
